@@ -1,8 +1,15 @@
-// #include "Config.h"
+#include <Arduino.h>
+#include <Adafruit_GFX.h>
 
 class Displays
 {
 public:
+	template <class T, class D> static void printError(T* display, D data)
+	{
+		display->setTextColor(WHITE,RED);
+		print(display, data);
+		resetText(display);
+	}
 	template <class T> static void print(T* d, vector* vect)
 	{
 		#if ALL_LABELS
@@ -36,25 +43,67 @@ public:
 		print(display, data);
 		display->println("");
 	}
-private:
-	
+	template <class T> static void resetText(T* display)
+	{
+		display->setTextSize(1);
+		display->setTextColor(WHITE);
+	}
+	// template <class T, class D> static void sprintln(T* displa)
 };
-// 
-// class InfoPane : Display
-// {
-// public:
-// 	void setTitle();
-// 	DataPane * addData();
-// 	void setColor();
-// private:
-// 	
-// };
-// 
-// 
-// 
-// class DataPane : InfoPane
-// {
-// public:
-// 	void setLabel();
-// 	void setData();
-// }
+
+// INTERFACE CLASSES
+class Interface : Displays
+{
+public:
+	Interface();
+	template <class T> void addObject(T* object);
+	void addObject(const char * title, uint16_t color, int index);
+	void updateBounds();
+	void setDisplay(Adafruit_GFX * d, uint16_t color)
+	{
+		display = d;
+		
+		pos.x = 0;
+		pos.y = 0;
+		pos.w = 100;
+		pos.h = 50;
+		
+		pos.padding_y = 10;
+		
+		display->fillScreen(color);
+	}
+private:
+	int index;
+	Adafruit_GFX * display;
+	Rectangle pos;
+};
+
+Interface::Interface()
+{
+
+}
+
+template <class T> void Interface::addObject(T* object)
+{
+	display->setCursor(pos.x,pos.y);
+	println(display, "Wrong type.");
+}
+
+void Interface::addObject(const char * title, uint16_t color, int index)
+{
+	#if SERIAL_PRINT_ENABLE
+		#if DEBUG_INTERFACE
+			Serial.print("Pane object printing... ");
+			Serial.print(color, HEX);
+			Serial.print(" @");
+			Serial.print(pos.x);
+			Serial.print(",");
+			Serial.println(pos.y);
+		#endif
+	#endif
+			
+	display->setTextColor(WHITE);
+	display->fillRect(pos.x, pos.h*index + ((index != 0) ? pos.padding_y*index : 0) + 5 , pos.w, pos.h, color);
+	display->setCursor(pos.x + pos.padding_y,pos.h*index + (int)pos.h/2 + pos.padding_y*index);
+	println(display, title);
+}

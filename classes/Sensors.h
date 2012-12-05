@@ -9,19 +9,15 @@ public:
 	static void writeTo(int destination, byte address, byte val);
 	static void readFrom(int destination, byte address, int num, byte _buff[]);
 	static int getTime();
+	static unsigned long int getLongTime();
+	static volatile bool sensorSecond;
 private:
 	static unsigned long int time;
 };
 
 unsigned long int Sensors::time;
 
-// int HMC6352SlaveAddress = 0x21;
-// int HMC6352ReadAddress = 0x41; //"A" in hex, A command is:
-// int DEVICE = 0x1D;
-// 
-// byte _buff[6];
-// 
-
+volatile bool Sensors::sensorSecond = 0;
 
 Sensors::Sensors()
 {
@@ -32,6 +28,11 @@ Sensors::Sensors()
 int Sensors::getTime()
 {
 	return (int)((float)(0.001 * (millis() - time)));
+}
+
+unsigned long int Sensors::getLongTime()
+{
+	return millis() - time;
 }
 
 void Sensors::writeTo(int destination, byte address, byte val) {

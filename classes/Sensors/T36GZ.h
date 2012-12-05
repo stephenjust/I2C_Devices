@@ -1,10 +1,7 @@
-#include "../Sensors.h"
+#ifndef _T36GZ_H_
+#define _T36GZ_H_
 
-typedef struct therm
-{
-	float voltage;
-	double temp;
-};
+#include "../Sensors.h"
 
 class T36GZ : Sensors
 {
@@ -30,7 +27,7 @@ therm* T36GZ::getData()
 void T36GZ::readData()
 {
 	// Prevents excess measurements, only capture every 10 seconds
-	if(data.voltage != 0.0 && Sensors::getTime()%10 != 0)
+	if(data.voltage != 0.0 && Sensors::getTime()%5 != 0)
 		return;
 	
 	int reading = analogRead(T36GZPin);
@@ -40,8 +37,12 @@ void T36GZ::readData()
 
 void T36GZ::printData()
 {
+	#if SERIAL_PRINT_ENABLE
 	Serial.print(data.temp);
 	Serial.print(" C ");
 	Serial.print(data.voltage);
 	Serial.print(" mV");
+	#endif
 }
+
+#endif

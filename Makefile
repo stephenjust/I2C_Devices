@@ -1,7 +1,7 @@
 TARGET = HMC6352
 
 # Place your Arduino libs here! It's okay to not define this.
-ARDUINO_LIBS = SPI Wire Adafruit_GFX Adafruit_ST7735 Adafruit_TFTLCD TouchScreen Adafruit_SD Adafruit_SD/utility SD/utility
+ARDUINO_LIBS = SPI Wire Adafruit_GFX Adafruit_ST7735 Adafruit_TFTLCD TouchScreen Adafruit_SD Adafruit_SD/utility SD/utility TimerThree TinyGPS
 
 #  TimerThree
 
