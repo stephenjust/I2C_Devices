@@ -23,6 +23,7 @@ class DataLog {
 		{
 			return validData;
 		}
+		static history printedTime;
 	private:
 		static char* FileName;
 		static bool validData;
@@ -30,6 +31,7 @@ class DataLog {
 	
 	char* DataLog::FileName = "DATAFILE.CSV";
 	bool DataLog::validData = true;
+	history DataLog::printedTime = {0,0};
 	
 	DataLog::DataLog()
 	{	

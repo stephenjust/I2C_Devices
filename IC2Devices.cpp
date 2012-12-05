@@ -1,58 +1,59 @@
 //All this does is read the heading from HMC6352 and spit it out via serial
 #include <Arduino.h>
-#include <Wire.h>
-#include <TimerThree.h>
 
-#include <TinyGPS.h>
+#include <Wire.h> // Interface library for use with sensors
+#include <TimerThree.h> // Timer library for use with the GPS check
 
-#include <Adafruit_GFX.h>	// Core graphics library
+#include <TinyGPS.h> // TinyGPS library to parse the NMEA data
+
+#include <Adafruit_GFX.h>// Core graphics library
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
-#include <TouchScreen.h>
+#include <TouchScreen.h> // TouchScreen library for interfacing with the TFTLCD
 
 #include <Adafruit_ST7735.h> // Hardware-specific library
-#include <SPI.h>
+#include <SPI.h> // SPI to use the specilized ports for the LCD display
 
-#include <SD.h>
+#include <SD.h> // To read/write from/to the SD card
 
-#include "structs/structs.h"
-#include "classes/Config.h"
-#include "classes/DataLog.h"
+#include "structs/structs.h" // Contains all structures used globally
+#include "classes/Config.h" // Contains the configuration files and global variables
+#include "classes/DataLog.h" // Contains the DataLog class
 
-#include "classes/Sensors.h"
-#include "classes/Sensors/ADXL345.h"
-#include "classes/Sensors/HMC6352.h"
-#include "classes/Sensors/T36GZ.h"
-#include "classes/Sensors/GTPA010.h"
+#include "classes/Sensors.h" // Contains the Sensor class and utility classes
+#include "classes/Sensors/ADXL345.h" // Contains the ADXL345 class
+#include "classes/Sensors/HMC6352.h" // Contains the HMC6352 class
+#include "classes/Sensors/T36GZ.h" // Contains the T36GZ class
+#include "classes/Sensors/GTPA010.h" // Contains the GTPA010 class
 
-#include "classes/MapData.h"
+#include "classes/MapData.h" // Contains the mapping data class
 
-#include "classes/Displays.h"
-#include "classes/Displays/DADXL345.h"
-#include "classes/Displays/DHMC6352.h"
-#include "classes/Displays/DT36GZ.h"
-#include "classes/Displays/DGTPA010.h"
+#include "classes/Displays.h" // Contains the Displays class as well as the utility classes for displaying content on the screen
+#include "classes/Displays/DADXL345.h" // Contains the DADXL345 class
+#include "classes/Displays/DHMC6352.h" // Contains the DHMC6352 class
+#include "classes/Displays/DT36GZ.h" // Contains the DT36GZ class
+#include "classes/Displays/DGTPA010.h" // Contains the DGTPA010 class
 
 Interface myInt = Interface::Interface();
 
-Sd2Card card;
-DataLog * data;
+/* Global initilization of core classes */
+Interface interface = Interface::Interface(); // Interface definition
+Sd2Card card; // SD card definition and initilization
+DataLog * data; // DataLog initilization and definition
 
+// Setup function, core to the Arduino setup
 void setup(){
 	
-	// #if SERIAL_PRINT_ENABLE
-	Serial.begin(9600);
-	Serial.println("INIT");
-	// #endif
+	Serial.begin(9600); // Start the hardware serial interface
+	Serial.println("INIT"); // Print INIT over the serial to ensure serial is working correctly
 	
-	// Setup wire interface
-	Sensors::Sensors();
+	Sensors::Sensors(); // Setup wire interface
 	
-	// Setup the ADXL345 device
-	ADXL345::begin();
+	ADXL345::begin(); // Setup the ADXL345 device
 	pinMode(GYRO_WARNING_LED, OUTPUT);
 	
-	// Setup the GTPA010 device
-	GTPA010::begin();
+	GTPA010::begin(); // Setup the GTPA010 device
+	
+	/* ----------------------- Screen initilizations -----------------------  */
 	
 	// Initilize screens
 	ST7735.initR(INITR_REDTAB);   // initialize a ST7735R chip, red tab
@@ -91,10 +92,7 @@ void setup(){
 		return;
 	}
 	
-	
-	
-	// Setup the datalogger + indicator light
-	data = new DataLog();
+	data = new DataLog(); // Setup the datalogger + indicator light
 	pinMode(DATAWRITE_LED, OUTPUT);
 	
 	// Setup display interface
@@ -281,10 +279,10 @@ void loop()
 	mode.o = mode.n;
 	
 	// Record data to SD card if the time is a modulus of 5 (Every 5 seconds)
-	if((printedTime.n = Sensors::getTime()) && printedTime.n%5 == 0 && printedTime.n != printedTime.o && GTPA010::check())
+	if((DataLog::printedTime.n = Sensors::getTime()) && DataLog::printedTime.n%5 == 0 && DataLog::printedTime.n != DataLog::printedTime.o && GTPA010::check())
 	{
-		printedTime.o = printedTime.n;
-		printedTime.n = Sensors::getTime();
+		DataLog::printedTime.o = DataLog::printedTime.n;
+		DataLog::printedTime.n = Sensors::getTime();
 		
 		// Add the data to the packet string
 		#if !DISABLE_SDCARD_WRITING
@@ -335,6 +333,4 @@ void loop()
 		}
 		#endif
 	}
-	
-	// rows++;
 }
