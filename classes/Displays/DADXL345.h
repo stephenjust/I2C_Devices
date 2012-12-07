@@ -24,34 +24,32 @@ int DADXL345::mapped_magnitude;
 
 template <class T> void DADXL345::display(T* display)
 {
-	data = getData();
+	data = getData(); // Refresh the data
 	
-	if(sensorSecond)
+	if(sensorSecond) // Check if it was displayed already this second
 	{
-		sensorSecond = 0;
-		dataIndicator.r = 5;
-			
-		display->drawCircle(largeCircle.x, largeCircle.y, largeCircle.r, WHITE);
-			
+		sensorSecond = 0; // Reset the variable
+		dataIndicator.r = 5; // Define the radius of the data circle
+		
 		mapped_magnitude = map(data->magnitude, 0, sensistivity, 0, largeCircle.r);
 		
 		dataIndicator.x = cos(-data->rangle) * (mapped_magnitude + dataIndicator.r + 2);
 		dataIndicator.y = sin(data->rangle) * (mapped_magnitude + dataIndicator.r + 2);
-				
+		
 		if(oldCompass.x != dataIndicator.x)
 		{
-			display->fillCircle(oldCompass.x + largeCircle.x, oldCompass.y + largeCircle.y, oldCompass.r,BACKGROUND_COLOR);
-			display->fillCircle(dataIndicator.x + largeCircle.x, dataIndicator.y + largeCircle.y, dataIndicator.r, YELLOW);
-					
-			oldCompass = dataIndicator;
+			display->drawCircle(largeCircle.x, largeCircle.y, largeCircle.r, WHITE); // Draw the large outer circle
+			display->fillCircle(oldCompass.x + largeCircle.x, oldCompass.y + largeCircle.y, oldCompass.r,BACKGROUND_COLOR); // Erase old circle
+			display->fillCircle(dataIndicator.x + largeCircle.x, dataIndicator.y + largeCircle.y, dataIndicator.r, YELLOW); // Draw new circle
+			
+			oldCompass = dataIndicator; // Update oldCompass
 		}
 	}
 }
 
 void DADXL345::reset()
 {
-	// Resets the old variable to a non equal state
-	oldCompass.x = dataIndicator.x + 1;
+	oldCompass.x = dataIndicator.x + 1; // Resets the old variable to a non equal state
 }
 
 #endif
