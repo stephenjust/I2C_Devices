@@ -156,6 +156,7 @@ The I2C Interface project provides a set of data logging methods, sensor communi
 
 
 ###Starting the device
+1. Copy the maps that are located in the `maps` directory onto the SD card
 1. Wire the device as described in the wiring section of this document
 2. Insert a properly formatted SD card with the provided `uofa.bmp` file on it
 3. Power the device with a battery pack or USB connection
