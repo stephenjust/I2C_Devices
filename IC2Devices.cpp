@@ -15,6 +15,8 @@
 
 #include <SD.h> // To read/write from/to the SD card
 
+#include "classes/mem_syms.h"
+
 #include "structs/structs.h" // Contains all structures used globally
 #include "classes/Config.h" // Contains the configuration files and global variables
 #include "classes/DataLog.h" // Contains the DataLog class
@@ -44,7 +46,7 @@ DataLog * data; // DataLog initilization and definition
 void setup(){
 	
 	Serial.begin(9600); // Start the hardware serial interface
-	Serial.println("INIT"); // Print INIT over the serial to ensure serial is working correctly
+	// Serial.println("INIT"); // Print INIT over the serial to ensure serial is working correctly
 	
 	Sensors::Sensors(); // Setup wire interface
 	
@@ -92,7 +94,7 @@ void setup(){
 		return;
 	}
 	
-	data = new DataLog(); // Setup the datalogger + indicator light
+	data = new DataLog("DATAFILE.CSV"); // Setup the datalogger + indicator light
 	pinMode(DATAWRITE_LED, OUTPUT);
 	
 	// Setup display interface
@@ -102,10 +104,13 @@ void setup(){
 	myInt.addObject("GPS", BLUE, 1);
 	myInt.addObject("Accelerometer", BLUE, 2);
 	myInt.addObject("Temperature", BLUE, 3);
+	
 }
 
 void loop()
 {
+	// printMem();
+	
 	static history touchInput = {-1,-1};
 	
 	// Rows displayed on the small LCD is limited, so we keep track of the active number of lines on the screen as to allow refreshed to occur at the maximum
@@ -135,24 +140,22 @@ void loop()
 			#if SERIAL_PRINT_ENABLE
 				#if DEBUG_INTERFACE
 				Displays::print(&ST7735,"OLD: ");
-				Displays::print(&ST7735, oldin);
+				Displays::print(&ST7735, touchInput.o);
 				Displays::print(&ST7735," NEW: ");
-				Displays::println(&ST7735,in);
+				Displays::println(&ST7735,touchInput.n);
 			
 				Displays::print(&ST7735,"Pressure: ");
 				Displays::print(&ST7735,p.x);
 				Displays::print(&ST7735,",");
 				Displays::print(&ST7735,p.y);
 				Displays::print(&ST7735," - ");
-				Displays::println(&ST7735,in);
+				Displays::println(&ST7735,touchInput.n);
 				#endif
 			#endif
 		}
 		
 		if(touchInput.o != touchInput.n)
 		{
-			#define SELECTED_COLOR 0x0410
-			
 			switch(touchInput.n)
 			{
 				case 0 :
@@ -179,10 +182,21 @@ void loop()
 			{
 				case 0 :
 					myInt.addObject("Compass", BLUE, 0);
+					DHMC6352::reset();
 					break;
 				case 1 :
 					myInt.addObject("GPS", BLUE, 1);
+					
+					#if ANTLER_LAKE
 					antlerLake->resetMap();
+					#else
+						#if UOFA_2
+						uofa2->resetMap();
+						#else
+						uofa->resetMap();
+						#endif
+					#endif
+					
 					break;
 				case 2 :
 					myInt.addObject("Accelerometer", BLUE, 2);
@@ -210,7 +224,10 @@ void loop()
 	T36GZ::readData();
 	
 	GTPA010::readData();
-	// GTPA010::fakeData();
+	
+	#if FAKE_GPS_DATA
+	GTPA010::fakeData();
+	#endif
 	
 	#if SERIAL
 	HMC6352::printData();
@@ -224,7 +241,7 @@ void loop()
 	// Read data from sensors into local varialbles
 	vector *ADXL345data = ADXL345::getData();
 	therm *T36GZdata = T36GZ::getData();
-	float *HMC6352data = HMC6352::getData();
+	angle *HMC6352data = HMC6352::getData();
 	gpsData *GTPA010data = GTPA010::getData();
 	
 	
@@ -238,7 +255,8 @@ void loop()
 	{
 		case 0 :
 		{
-			Displays::println(&ST7735, *HMC6352data);
+			// Compass display
+			Displays::println(&ST7735, HMC6352data);
 			rows++;
 			
 			DHMC6352::display(&TFTLCD);
@@ -278,38 +296,40 @@ void loop()
 	// Record old mode that was selected
 	mode.o = mode.n;
 	
-	// Record data to SD card if the time is a modulus of 5 (Every 5 seconds)
-	if((DataLog::printedTime.n = Sensors::getTime()) && DataLog::printedTime.n%5 == 0 && DataLog::printedTime.n != DataLog::printedTime.o && GTPA010::check())
+	// Record data to SD card if the time is a modulus of 5 (Once every 5 seconds) only if we hae a GPS lock
+	if(GTPA010::check() && (DataLog::printedTime.n = Sensors::getTime()) && DataLog::printedTime.n%5 == 0 && DataLog::printedTime.n != DataLog::printedTime.o)
 	{
 		DataLog::printedTime.o = DataLog::printedTime.n;
 		DataLog::printedTime.n = Sensors::getTime();
 		
-		// Add the data to the packet string
-		#if !DISABLE_SDCARD_WRITING
-			// GPS Data
-			data->addData(GTPA010data->lat);
-			data->addData(GTPA010data->lon);
-			data->addData(GTPA010data->age);
-			data->addData(GTPA010data->year);
-			data->addData(GTPA010data->month);
-			data->addData(GTPA010data->day);
-			data->addData(GTPA010data->hour);
-			data->addData(GTPA010data->minute);
-			data->addData(GTPA010data->second);
-			data->addData(GTPA010data->hundredths);
+		/* Add the data to the packet string */
+		
+		// GPS Data
+		data->addData(GTPA010data->lat);
+		data->addData(GTPA010data->lon);
+		data->addData(GTPA010data->age);
+		
+		// Time Data from the GPS unit
+		data->addData(GTPA010data->year);
+		data->addData(GTPA010data->month);
+		data->addData(GTPA010data->day);
+		data->addData(GTPA010data->hour);
+		data->addData(GTPA010data->minute);
+		data->addData(GTPA010data->second);
+		data->addData(GTPA010data->hundredths);
 			
-			// Accelerometer Data
-			data->addData(ADXL345data->x);
-			data->addData(ADXL345data->y);
-			data->addData(ADXL345data->z);
+		// Accelerometer Data
+		data->addData(ADXL345data->x);
+		data->addData(ADXL345data->y);
+		data->addData(ADXL345data->z);
 			
-			// Temperature Data
-			data->addData(T36GZdata->temp);
-			data->addData(T36GZdata->voltage);
+		// Temperature Data
+		data->addData(T36GZdata->temp);
+		data->addData(T36GZdata->voltage);
 			
-			// Magnetometer Data
-			data->addData(*HMC6352data);
-		#endif
+		// Magnetometer Data
+		data->addData(HMC6352data->d);
+		
 		
 		// Save the data to the SD card and save the return status
 		int saveStatus = data->saveData();
@@ -333,4 +353,8 @@ void loop()
 		}
 		#endif
 	}
+	
+	#if MEM_DEBUG
+	printMem(); // Prints the available memory out to serial if MEM_DEBUG has been enabled
+	#endif
 }

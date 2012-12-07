@@ -12,6 +12,10 @@
 #define DELETE_DATAFILE_ON_STARTUP 1
 
 #define FAKE_GPS_DATA 0
+#define ANTLER_LAKE 0
+#define UOFA_2 0
+
+#define MEM_DEBUG 0
 
 // CONSTANTS
 
@@ -47,6 +51,17 @@
 #define WHITE   0xFFFF
 
 #define BACKGROUND_COLOR 0x0010
+#define SELECTED_COLOR 0x0410
+
+// bmpDraw opens a Windows Bitmap (BMP) file and
+// displays it at the given coordinates. It's sped up
+// by reading many pixels worth of data at a time
+// (rather than pixel by pixel). Increasing the buffer
+// size takes more of the Arduino's precious RAM but
+// makes loading a little faster. 20 pixels seems a
+// good balance.
+
+#define BUFFPIXEL 20
 
 // standard U of A library settings, assuming Atmel Mega SPI pins
 #define SD_CS 33  // Chip select line for SD card

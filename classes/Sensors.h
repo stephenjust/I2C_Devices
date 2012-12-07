@@ -59,6 +59,7 @@ void Sensors::readFrom(int destination, byte address, int num, byte _buff[]) {
 		_buff[i] = Wire.read();    // receive a byte
 		i++;
 	}
+	
 	Wire.endTransmission();         // end transmission
 }
 

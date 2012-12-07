@@ -4,17 +4,21 @@
 class DHMC6352 : HMC6352 {
 public:
 	template <class T> static void display(T* display);
+	static void reset();
 protected:
-	static circle bigCompass;
+	static const circle bigCompass;
 	static circle smlCompass;
 	static circle oldCompass;
-	static float* degHMC6352data;
+	static angle* HMC6352data;
+	static bool lcPrint;
 };
 
-circle DHMC6352::bigCompass;
+const circle DHMC6352::bigCompass = {210, 125, 63};
 circle DHMC6352::smlCompass;
 circle DHMC6352::oldCompass;
-float* DHMC6352::degHMC6352data = getData();
+angle* DHMC6352::HMC6352data = getData();
+
+bool DHMC6352::lcPrint = true;
 
 template <class T> void DHMC6352::display(T* display)
 {
@@ -24,7 +28,7 @@ template <class T> void DHMC6352::display(T* display)
 		display->setCursor(135,10);
 		display->setTextSize(2);
 		display->setTextColor(RED);
-		display->print("Please center");
+		display->print("Please level");
 		display->setCursor(175,25);
 		display->print("device");
 		Displays::resetText(display);
@@ -36,61 +40,63 @@ template <class T> void DHMC6352::display(T* display)
 		display->setCursor(135,10);
 		display->setTextSize(2);
 		display->setTextColor(BACKGROUND_COLOR);
-		display->print("Please center");
+		display->print("Please level");
 		display->setCursor(175,25);
 		display->print("device");
 		Displays::resetText(display);
 	}
 	
 	
-	// if(Sensors::getLongTime()%50 == 0)
 	if(sensorSecond)
 	{
 		sensorSecond = 0;
 		
-		bigCompass.r = 63;
 		smlCompass.r = 5;
-		bigCompass.x = 210;
-		bigCompass.y = 125;
-				
-		display->drawCircle(bigCompass.x, bigCompass.y, bigCompass.r, WHITE);
-				
+		
 		display->setCursor(bigCompass.y, bigCompass.x);
 		display->setTextColor(BACKGROUND_COLOR,BACKGROUND_COLOR);
-		display->print(*degHMC6352data);
+		display->print(HMC6352data->d);
 		display->print(" degrees");
 		
 		#if SERIAL_PRINT_ENABLE
-		Serial.print("OLD: ");
-		Serial.print(*degHMC6352data);
-		Serial.println(" degrees ");
+		Serial.print("OLD: "); Serial.print(HMC6352data->d); Serial.println(" degrees ");
 		#endif
 			
-		degHMC6352data = getData();
+		HMC6352data = getData();
 		
 		display->setCursor(bigCompass.y, bigCompass.x);
 		display->setTextColor(WHITE,BACKGROUND_COLOR);
-		display->print(*degHMC6352data);
+		display->print(HMC6352data->d);
 		display->print(" degrees");
 		
 		#if SERIAL_PRINT_ENABLE
-		Serial.print("NEW: ");
-		Serial.print(*degHMC6352data);
-		Serial.println(" degrees");
+		Serial.print("NEW: "); Serial.print(HMC6352data->d); Serial.println(" degrees");
 		#endif
 		
-		float radianHMC6352data = *degHMC6352data * 1000/57296;
-		smlCompass.y = cos(radianHMC6352data) * (bigCompass.r + smlCompass.r + 2);
-		smlCompass.x = sin(radianHMC6352data) * (bigCompass.r + smlCompass.r + 2);
+		smlCompass.y = cos(HMC6352data->r) * (bigCompass.r + smlCompass.r + 2);
+		smlCompass.x = sin(HMC6352data->r) * (bigCompass.r + smlCompass.r + 2);
 				
 		if(oldCompass.x != smlCompass.x)
 		{
+			if(lcPrint)
+			{
+				display->drawCircle(bigCompass.x, bigCompass.y, bigCompass.r, WHITE);
+				lcPrint = false;
+			}
+				
+			
 			display->fillCircle(oldCompass.x + bigCompass.x, oldCompass.y + bigCompass.y, oldCompass.r,BACKGROUND_COLOR);
 			display->fillCircle(smlCompass.x + bigCompass.x, smlCompass.y + bigCompass.y, smlCompass.r, RED);
 					
 			oldCompass = smlCompass;
 		}
 	}
+}
+
+void DHMC6352::reset()
+{
+	oldCompass.x = smlCompass.x - 1;
+	lcPrint = true;
 }
 
 #endif

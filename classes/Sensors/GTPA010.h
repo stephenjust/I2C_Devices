@@ -3,30 +3,54 @@
 
 #include "../Sensors.h"
 
+typedef struct gpsData
+{
+	long int lat;
+	long int lon;
+	
+	// Checksum information
+	unsigned long int age;
+	
+	// Date/Time information
+	int year;
+	byte month;
+	byte day;
+	byte hour;
+	byte minute;
+	byte second;
+	byte hundredths;
+	
+};
+
 class GTPA010 : Sensors
 {
 public:
-	static void printData();
-	static void readData();
-	static gpsData* getData();
+	static void printData(); // Designed to print the data onto serial
+	static void readData(); // Executes the reading procedures from the sensor
+	static gpsData* getData(); // Gets the address of the data struct
 	
-	static void fakeData();
+	#if FAKE_GPS_DATA
+	static void fakeData(); // Used in testing, designed to replicate GPS data for the purpose of validating other functions, not included in production class, defined in Config
+	#endif
 	
-	static void begin();
-	static bool check();
+	static void begin(); // Begin sensor initilization routines
+	static bool check(); // A validity check for the sensor, if true, its reporting a valid response, if false, then response is invalid
 	
-	static void gpsCheck();
+	static void gpsCheck(); // A function called by an inturput service to check GPS lock status
 private:
-	static gpsData data;
-	static bool newData;
-	static const long int timer_ticks = 1000000;
+	static gpsData data; // Used to store the data in the gpsData struct
+	static bool newData; // A private variable determining if the data has been refreshed
+	static const long int timer_ticks = 1000000; // The length of ticks inbetween checks of the GPS, dependant on the devices clock speed
+	static char dataBuffer; // Char buffer for the inputed data
 
-	static volatile bool gpsValue;
-	static volatile bool gpsLock;
+	static volatile bool gpsValue; // The value read from the GPS 2D/3D fix pin
+	static volatile bool gpsLock; // The indicator for a valid lock against a 2D/3D lock
 };
 
 gpsData GTPA010::data;
 bool GTPA010::newData = 0;
+
+char GTPA010::dataBuffer;
 
 volatile bool GTPA010::gpsValue = -1;
 volatile bool GTPA010::gpsLock = 0;
@@ -56,37 +80,33 @@ void GTPA010::begin()
 
 void GTPA010::gpsCheck()
 {
-	bool oldGpsValue = gpsValue;
+	bool oldGpsValue = gpsValue; // check the old value for the 2D/3D lock pin
 	
-	gpsValue = digitalRead(GPS_FIX_PIN);
+	gpsValue = digitalRead(GPS_FIX_PIN); // refresh value with a digitalRead
 	
-	if(!(oldGpsValue ^ gpsValue))
+	if(!(oldGpsValue ^ gpsValue)) // Does the {new,old} value both 0?
 	{
-		gpsLock = 1;
+		gpsLock = 1; // Indicate a lock is present
 	}
 	else
 	{
-		gpsLock = 0;
+		gpsLock = 0; // Clear the lock variable
 	}
 	
-	sensorSecond = !sensorSecond;
+	sensorSecond = !sensorSecond; // Toggle the static sensor class variable for use of other sensors
 }
 
 void GTPA010::readData()
 {
 	if(gpsLock)
 	{
-		// For one second we parse GPS data and report some key values
-		// for (unsigned long start = millis(); millis() - start < 1000;)
-		// {
-			while (Serial2.available())
-			{
-				char c = Serial2.read();
+		while (Serial2.available())
+		{
+			dataBuffer = Serial2.read();
 				
-				if (gps.encode(c)) // Did a new valid sentence come in?
-					newData = true;
-			}
-		// }
+			if (gps.encode(dataBuffer)) // Did a new valid sentence come in?
+				newData = true;
+		}
 		
 		gps.get_position(&data.lat, &data.lon, &data.age);
 		gps.crack_datetime(&data.year, &data.month, &data.day, &data.hour, &data.minute, &data.second, &data.hundredths, &data.age);
@@ -103,12 +123,20 @@ void GTPA010::readData()
 	}
 }
 
+#if FAKE_GPS_DATA
 void GTPA010::fakeData()
 {
-	data.lat = 5348435 + Sensors::getTime();
-	data.lon = -11298005 + Sensors::getTime();
+	#if ANTLER_LAKE
+	data.lat = 5348435;
+	data.lon = -11298005 - Sensors::getTime() * 3;
+	#else
+	data.lat = 5352712;
+	data.lon = -11352953 - Sensors::getTime() * 3;
+	#endif
+	
 	newData = true;
 }
+#endif
 
 void GTPA010::printData()
 {

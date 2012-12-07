@@ -1,6 +1,15 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 
+typedef struct Rectangle {
+	uint16_t x;
+	uint16_t y;
+	uint16_t w;
+	uint16_t h;
+	
+	uint16_t padding_y;
+};
+
 class Displays
 {
 public:
@@ -33,6 +42,17 @@ public:
 		print(display, " C ");
 		print(display, temp->voltage);
 		print(display, " V");
+	}
+	template <class T> static void print(T* display, angle* an)
+	{
+		#if ALL_LABELS
+		print(display, "Angle: ");
+		#endif
+		
+		print(display, an->d);
+		print(display, " Deg ");
+		print(display, an->r);
+		print(display, " Rad");
 	}
 	template <class T, class D> static void print(T* display, D data)
 	{

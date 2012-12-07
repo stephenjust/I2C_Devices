@@ -15,7 +15,29 @@ template <class T> void DGTPA010::display(T* display)
 	data = getData();
 	
 	if(check())
-		antlerLake->drawCursor(display, data);
+	{
+		#if ANTLER_LAKE
+		bool bounds = antlerLake->drawCursor(display, data);
+		#else
+			#if UOFA_2
+			bool bounds = uofa2->drawCursor(display, data);
+			#else
+			bool bounds = uofa->drawCursor(display, data);
+			#endif
+		#endif
+		
+			if(!bounds)
+			{
+				display->fillRect(101, 0, TFTLCD.width(), TFTLCD.height(), BACKGROUND_COLOR);
+				display->setCursor(135,90);
+				display->setTextSize(2);
+				display->setTextColor(RED);
+				display->print("Out of Map");
+				display->setCursor(190,130);
+				display->print("Boundry");
+				Displays::resetText(display);
+			}
+	}
 	else
 	{
 		display->setCursor(135,90);

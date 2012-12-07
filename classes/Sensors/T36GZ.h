@@ -3,6 +3,12 @@
 
 #include "../Sensors.h"
 
+typedef struct therm
+{
+	float voltage;
+	double temp;
+};
+
 class T36GZ : Sensors
 {
 public:
@@ -26,7 +32,7 @@ therm* T36GZ::getData()
 
 void T36GZ::readData()
 {
-	// Prevents excess measurements, only capture every 10 seconds
+	// Prevents excess measurements, only capture every 5 seconds
 	if(data.voltage != 0.0 && Sensors::getTime()%5 != 0)
 		return;
 	
