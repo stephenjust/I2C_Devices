@@ -100,6 +100,7 @@ void setup(){
 	// Setup display interface
 	myInt.setDisplay(&TFTLCD, BACKGROUND_COLOR);
 	
+	// Setup buttons
 	myInt.addObject("Compass", BLUE, 0);
 	myInt.addObject("GPS", BLUE, 1);
 	myInt.addObject("Accelerometer", BLUE, 2);
@@ -127,15 +128,17 @@ void loop()
 	pinMode(YP, OUTPUT);
 	//pinMode(YM, OUTPUT);
 	
+	// Check if the pressure is within tollerance
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		// scale from 0->1023 to tft.width
 		p.x = map(p.x, TS_MINX, TS_MAXX, TFTLCD.width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, TFTLCD.height(), 0);
 		
+		// Check to see if it is a button
 		if(p.y > 150)
 		{
-			touchInput.o = touchInput.n;
-			touchInput.n = (p.x + 20)/100;
+			touchInput.o = touchInput.n; // Dont forget the old one
+			touchInput.n = (p.x + 20)/100; // Compute the new button index
 			
 			#if SERIAL_PRINT_ENABLE
 				#if DEBUG_INTERFACE
@@ -154,8 +157,10 @@ void loop()
 			#endif
 		}
 		
+		// If the button has changed
 		if(touchInput.o != touchInput.n)
 		{
+			// Change the hightlight color
 			switch(touchInput.n)
 			{
 				case 0 :
@@ -176,17 +181,20 @@ void loop()
 					break;
 			}
 			
+			// Dont forget to remember the new mode
 			mode.n = touchInput.n;
 			
+			// Change the color of the old button pressed back to defualt
 			switch(touchInput.o)
 			{
 				case 0 :
 					myInt.addObject("Compass", BLUE, 0);
-					DHMC6352::reset();
+					DHMC6352::reset(); // Reset the cursor interface
 					break;
 				case 1 :
 					myInt.addObject("GPS", BLUE, 1);
 					
+					// Reset the map object
 					#if ANTLER_LAKE
 					antlerLake->resetMap();
 					#else
@@ -200,7 +208,7 @@ void loop()
 					break;
 				case 2 :
 					myInt.addObject("Accelerometer", BLUE, 2);
-					DADXL345::reset();
+					DADXL345::reset(); // Reset the accelerometer interface
 					break;
 				case 3 :
 					myInt.addObject("Temperature", BLUE, 3);
@@ -219,24 +227,22 @@ void loop()
 		rows = 0;
 	}
 	
-	HMC6352::readData();
-	ADXL345::readData();
-	T36GZ::readData();
-	
-	GTPA010::readData();
+	HMC6352::readData(); // Read the sensor and populate its values
+	ADXL345::readData(); // Read the sensor and populate its values
+	T36GZ::readData(); // Read the sensor and populate its values
+	GTPA010::readData(); // Read the sensor and populate its values
 	
 	#if FAKE_GPS_DATA
-	GTPA010::fakeData();
+	GTPA010::fakeData(); // If we're testing the GPS with fake data, fake it!
 	#endif
 	
 	#if SERIAL
+	// Print out the data via serial
 	HMC6352::printData();
 	ADXL345::printData(); // read the x/y/z tilt
 	T36GZ::printData();
 	GTPA010::printData();
 	#endif
-	
-	// GTPA010::printData();
 	
 	// Read data from sensors into local varialbles
 	vector *ADXL345data = ADXL345::getData();
@@ -260,7 +266,6 @@ void loop()
 			rows++;
 			
 			DHMC6352::display(&TFTLCD);
-			
 			break;
 		}
 		case 1 :
@@ -277,18 +282,15 @@ void loop()
 			rows++;
 			
 			DADXL345::display(&TFTLCD);
-			
 			break;
 		}
 		case 3 :
 		{
 			// Temperature Display
-			
 			Displays::println(&ST7735, T36GZdata);
 			rows++;
 			
 			DT36GZ::display(&TFTLCD);
-			
 			break;
 		}
 	}

@@ -5,11 +5,9 @@
 
 typedef struct gpsData
 {
-	long int lat;
-	long int lon;
-	
-	// Checksum information
-	unsigned long int age;
+	long int lat; // Stores the latitude as a long int as specified by the TinyGPS librairy
+	long int lon; // Stores the longitude as a long int as specified by the TinyGPS librairy
+	unsigned long int age; // Checksum information
 	
 	// Date/Time information
 	int year;
@@ -19,7 +17,6 @@ typedef struct gpsData
 	byte minute;
 	byte second;
 	byte hundredths;
-	
 };
 
 class GTPA010 : Sensors
@@ -47,22 +44,25 @@ private:
 	static volatile bool gpsLock; // The indicator for a valid lock against a 2D/3D lock
 };
 
-gpsData GTPA010::data;
+
 bool GTPA010::newData = 0;
 
+/* Static variable declarations */
 char GTPA010::dataBuffer;
+gpsData GTPA010::data;
 
+// Inturupt values
 volatile bool GTPA010::gpsValue = -1;
 volatile bool GTPA010::gpsLock = 0;
 
 gpsData* GTPA010::getData()
 {
-	return &data;
+	return &data; // Returns the data pointer
 }
 
 bool GTPA010::check()
 {
-	return newData;
+	return newData; // Returns the status of newData
 }
 
 void GTPA010::begin()
@@ -85,33 +85,29 @@ void GTPA010::gpsCheck()
 	gpsValue = digitalRead(GPS_FIX_PIN); // refresh value with a digitalRead
 	
 	if(!(oldGpsValue ^ gpsValue)) // Does the {new,old} value both 0?
-	{
 		gpsLock = 1; // Indicate a lock is present
-	}
 	else
-	{
 		gpsLock = 0; // Clear the lock variable
-	}
 	
 	sensorSecond = !sensorSecond; // Toggle the static sensor class variable for use of other sensors
 }
 
 void GTPA010::readData()
 {
-	if(gpsLock)
+	if(gpsLock) // If we have a lock
 	{
-		while (Serial2.available())
+		while (Serial2.available()) // And while the Serial. is available
 		{
-			dataBuffer = Serial2.read();
+			dataBuffer = Serial2.read(); // Read the available data
 				
 			if (gps.encode(dataBuffer)) // Did a new valid sentence come in?
-				newData = true;
+				newData = true; // Notify the class that there is new data to show!
 		}
 		
-		gps.get_position(&data.lat, &data.lon, &data.age);
-		gps.crack_datetime(&data.year, &data.month, &data.day, &data.hour, &data.minute, &data.second, &data.hundredths, &data.age);
+		gps.get_position(&data.lat, &data.lon, &data.age); // Parse the position data
+		gps.crack_datetime(&data.year, &data.month, &data.day, &data.hour, &data.minute, &data.second, &data.hundredths, &data.age); // Parse the time data
 		
-		if(data.lat == TinyGPS::GPS_INVALID_ANGLE || data.lon == TinyGPS::GPS_INVALID_ANGLE || gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES || gps.hdop() == TinyGPS::GPS_INVALID_HDOP)
+		if(data.lat == TinyGPS::GPS_INVALID_ANGLE || data.lon == TinyGPS::GPS_INVALID_ANGLE || gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES || gps.hdop() == TinyGPS::GPS_INVALID_HDOP) // If any component of this data is invalid, then cancel the new data decleration, and if enabled, print that the data is invalid across the serial
 		{
 			newData = false;
 			
@@ -126,6 +122,7 @@ void GTPA010::readData()
 #if FAKE_GPS_DATA
 void GTPA010::fakeData()
 {
+	// Fake the data
 	#if ANTLER_LAKE
 	data.lat = 5348435;
 	data.lon = -11298005 - Sensors::getTime() * 3;
@@ -140,6 +137,8 @@ void GTPA010::fakeData()
 
 void GTPA010::printData()
 {
+	// Print the data via serial
+	
 	Serial.print("LAT=");
 		Serial.print(data.lat == TinyGPS::GPS_INVALID_ANGLE ? NAN : data.lat);
 	Serial.print(" LON=");

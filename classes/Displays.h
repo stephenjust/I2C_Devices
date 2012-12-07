@@ -1,5 +1,5 @@
-#include <Arduino.h>
-#include <Adafruit_GFX.h>
+#ifndef _DISPLAYS_H_
+#define _DISPLAYS_H_
 
 typedef struct Rectangle {
 	uint16_t x;
@@ -75,55 +75,46 @@ public:
 class Interface : Displays
 {
 public:
-	Interface();
-	template <class T> void addObject(T* object);
-	void addObject(const char * title, uint16_t color, int index);
-	void updateBounds();
+	Interface() {}
+	void addObject(const char * title, uint16_t color, int index)
+	{
+		#if SERIAL_PRINT_ENABLE
+			#if DEBUG_INTERFACE
+				Serial.print("Pane object printing... ");
+				Serial.print(color, HEX);
+				Serial.print(" @");
+				Serial.print(pos.x);
+				Serial.print(",");
+				Serial.println(pos.y);
+			#endif
+		#endif
+		
+		// Print the button and text
+		display->setTextColor(WHITE);
+		display->fillRect(pos.x, pos.h*index + ((index != 0) ? pos.padding_y*index : 0) + 5 , pos.w, pos.h, color);
+		display->setCursor(pos.x + pos.padding_y,pos.h*index + (int)pos.h/2 + pos.padding_y*index);
+		println(display, title);
+	}
 	void setDisplay(Adafruit_GFX * d, uint16_t color)
 	{
+		// Store the display address
 		display = d;
 		
+		// Declare the initial button position parameters
 		pos.x = 0;
 		pos.y = 0;
 		pos.w = 100;
 		pos.h = 50;
 		
+		// Add a padding
 		pos.padding_y = 10;
 		
+		// Print the interface background
 		display->fillScreen(color);
 	}
 private:
-	int index;
-	Adafruit_GFX * display;
-	Rectangle pos;
+	Adafruit_GFX * display; // Display object store
+	Rectangle pos; // Object for storing the postion of the buttons
 };
 
-Interface::Interface()
-{
-
-}
-
-template <class T> void Interface::addObject(T* object)
-{
-	display->setCursor(pos.x,pos.y);
-	println(display, "Wrong type.");
-}
-
-void Interface::addObject(const char * title, uint16_t color, int index)
-{
-	#if SERIAL_PRINT_ENABLE
-		#if DEBUG_INTERFACE
-			Serial.print("Pane object printing... ");
-			Serial.print(color, HEX);
-			Serial.print(" @");
-			Serial.print(pos.x);
-			Serial.print(",");
-			Serial.println(pos.y);
-		#endif
-	#endif
-			
-	display->setTextColor(WHITE);
-	display->fillRect(pos.x, pos.h*index + ((index != 0) ? pos.padding_y*index : 0) + 5 , pos.w, pos.h, color);
-	display->setCursor(pos.x + pos.padding_y,pos.h*index + (int)pos.h/2 + pos.padding_y*index);
-	println(display, title);
-}
+#endif

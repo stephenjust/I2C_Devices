@@ -33,6 +33,7 @@ template <class T> void DADXL345::display(T* display)
 		
 		mapped_magnitude = map(data->magnitude, 0, sensistivity, 0, largeCircle.r);
 		
+		// Compute the location of the angle on the circle
 		dataIndicator.x = cos(-data->rangle) * (mapped_magnitude + dataIndicator.r + 2);
 		dataIndicator.y = sin(data->rangle) * (mapped_magnitude + dataIndicator.r + 2);
 		

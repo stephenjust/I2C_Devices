@@ -5,12 +5,12 @@
 
 typedef struct vector
 {
-	int x;
-	int y;
-	int z;
-	int magnitude;
-	float angle;
-	float rangle;
+	int x; // X pos
+	int y; // Y pos
+	int z; // Y pos
+	int magnitude; // Mag of the vector
+	float angle; // Angle in degrees
+	float rangle; // Angle in radians
 };
 
 class ADXL345 : Sensors
@@ -29,14 +29,14 @@ private:
 	static const char POWER_CTL = 0x2D;	//Power Control Register
 	static const int POWER_CTL_VALUE = 0x08; // Measurement mode for the device
 	static const char DATA_FORMAT = 0x31; // Data format address
-	static const int DATA_FORMAT_VALUE = 0x01;
-	static const char DATAX0 = 0x32;	//X-Axis Data 0
-	static const char DATAX1 = 0x33;	//X-Axis Data 1
-	static const char DATAY0 = 0x34;	//Y-Axis Data 0
-	static const char DATAY1 = 0x35;	//Y-Axis Data 1
-	static const char DATAZ0 = 0x36;	//Z-Axis Data 0
-	static const char DATAZ1 = 0x37;	//Z-Axis Data 1
-	static const uint8_t howManyBytesToRead = 6;
+	static const int DATA_FORMAT_VALUE = 0x01; // Put the ADXL345 into +/- 4G range with 0x01 to the DATA_FORMAT register.
+	static const char DATAX0 = 0x32; //X-Axis Data 0 address
+	static const char DATAX1 = 0x33; //X-Axis Data 1 address
+	static const char DATAY0 = 0x34; //Y-Axis Data 0 address
+	static const char DATAY1 = 0x35; //Y-Axis Data 1 address
+	static const char DATAZ0 = 0x36; //Z-Axis Data 0 address
+	static const char DATAZ1 = 0x37; //Z-Axis Data 1 address
+	static const uint8_t howManyBytesToRead = 6; // The amount of bytes to read from the serial interface before continuing
 	static vector data; // Our struct to store our data inside.
 	static const int maxAccel = 30; // A value of maxAccel would indicate a tilt too great.
 	
@@ -89,12 +89,13 @@ void ADXL345::readData()
 
 void ADXL345::printData()
 {
-  Serial.print(" x: ");
-  Serial.print( data.x );
-  Serial.print(" y: ");
-  Serial.print( data.y );
-  Serial.print(" z: ");
-  Serial.println( data.z );
+	// Print the recorded data over serial if enabled
+	Serial.print(" x: ");
+	Serial.print( data.x );
+	Serial.print(" y: ");
+	Serial.print( data.y );
+	Serial.print(" z: ");
+	Serial.println( data.z );
 }
 
 #endif

@@ -3,19 +3,20 @@
 
 class DGTPA010 : GTPA010 {
 public:
-	template <class T> static void display(T* display);
+	template <class T> static void display(T* display); // Display the interface
 protected:
-	static gpsData *data;
+	static gpsData *data; // Stores the sensor data from the parent class
 };
 
-gpsData * DGTPA010::data = getData();
+gpsData * DGTPA010::data = getData(); // Load the ini data
 
 template <class T> void DGTPA010::display(T* display)
 {
-	data = getData();
+	data = getData(); // Update the data
 	
 	if(check())
 	{
+		// Preprocessor checks to determine the map to use from the settings configured in: Config.h
 		#if ANTLER_LAKE
 		bool bounds = antlerLake->drawCursor(display, data);
 		#else
@@ -28,7 +29,8 @@ template <class T> void DGTPA010::display(T* display)
 		
 			if(!bounds)
 			{
-				display->fillRect(101, 0, TFTLCD.width(), TFTLCD.height(), BACKGROUND_COLOR);
+				// If the coordanates from the GPS are out of the selected map bounds, tell us
+				display->fillRect(101, 0, display->width(), display->height(), BACKGROUND_COLOR);
 				display->setCursor(135,90);
 				display->setTextSize(2);
 				display->setTextColor(RED);
@@ -40,6 +42,7 @@ template <class T> void DGTPA010::display(T* display)
 	}
 	else
 	{
+		// If we dont have a GPS signal, tell us
 		display->setCursor(135,90);
 		display->setTextSize(2);
 		display->setTextColor(RED);

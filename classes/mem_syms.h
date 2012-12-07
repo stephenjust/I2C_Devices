@@ -72,20 +72,20 @@ long int i = 0;
 
 void printMem()
 {
-memAv = AVAIL_MEM;
+	// Print the available memory
+	memAv = AVAIL_MEM;
 	
-if(memAv != OldmemAv)
-{
-	i++;
+	if(memAv != OldmemAv)
+	{
+		i++;
 		
-	OldmemAv = memAv;
+		OldmemAv = memAv;
 		
-	Serial.print(i);
-	Serial.print(" ");
-	Serial.println(AVAIL_MEM, DEC);
+		Serial.print(i);
+		Serial.print(" ");
+		Serial.println(AVAIL_MEM, DEC);
 		
-}
-	
+	}
 }
 
 #endif

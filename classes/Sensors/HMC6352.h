@@ -5,8 +5,8 @@
 
 typedef struct angle
 {
-	float r;
-	float d;
+	float r; // Angle in radians
+	float d; // Angle in degrees
 };
 
 class HMC6352 : Sensors
@@ -37,9 +37,10 @@ angle* HMC6352::getData()
 
 void HMC6352::readData()
 {
+	// read the data in, check if the accelerometer is within tollerance
 	if(!ADXL345::check())
 	{
-		heading.d = NAN;
+		heading.d = NAN; // Else, save the vals as NAN
 		heading.r = NAN;
 		return;
 	}
@@ -47,8 +48,8 @@ void HMC6352::readData()
 	readFrom( HMC6352SlaveAddress, HMC6352ReadAddress, howManyBytesToRead, _buff); //read the acceleration data from the ADXL345
 	
 	heading.d = (_buff[0] << 8) + _buff[1]; //(MSB / LSB sum)
-	heading.d /= 10;
-	heading.r = heading.d * 1000/57296;
+	heading.d /= 10; // Degrees in heading
+	heading.r = heading.d * 1000/57296; // Heading in radians
 }
 
 void HMC6352::printData()
