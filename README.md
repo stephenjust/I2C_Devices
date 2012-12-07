@@ -1,4 +1,8 @@
 #I2C Interface
+Git repository at [https://github.com/Wyattjoh/I2C_Devices](https://github.com/Wyattjoh/I2C_Devices).
+
+Wyatt Johnson - 1230799
+
 ###Notes on in-class comments
 As the definitions of all the source is done in C++ classes, the function descriptions are not located beside the function, rather it is located in the class definition itself.
 
