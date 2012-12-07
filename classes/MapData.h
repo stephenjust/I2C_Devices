@@ -1,11 +1,13 @@
 #ifndef _MAPDATA_H_
 #define _MAPDATA_H_
 
+// Structure used to store a set of ordered coordanites
 typedef struct coord_t {
 	int x;
 	int y;
 };
 
+// Structure used to store map related coordinate information
 typedef struct map_coord
 {
 	long int north;
@@ -15,36 +17,37 @@ typedef struct map_coord
 	long int west;
 };
 
-typedef struct {
-  char file_name[25];
-  uint16_t ncols;
-  uint16_t nrows;
-} lcd_image_t;
+// Structure used to store information related to a BMP image
+typedef struct lcd_image_t {
+	char file_name[25];
+	uint16_t ncols;
+	uint16_t nrows;
+};
 
 class MapData
 {
 public:
-	MapData(long int north, long int south, long int west, long int east, char * filename, int width, int height);
-	void drawMap();
-	void drawMap(coord_t * tile);
-	bool drawCursor(Adafruit_TFTLCD *display, gpsData* data);
-	void resetMap();
+	MapData(long int north, long int south, long int west, long int east, char * filename, int width, int height); // Adds a map object
+	void drawMap(); // Draws a map image as defined by its properties
+	void drawMap(coord_t * tile); // An overloaded function for drawing a specific tile of the map
+	bool drawCursor(Adafruit_TFTLCD *display, gpsData* data); // Draws a cursor/map image onto the screen passed using provided gps info
+	void resetMap(); // Resets the map drawing parameter
 protected:
-	void mapCursor(long int* lat, long int* lon);
-	void remapCursor();
-	void centerCursor();
-	void bmpDraw(int x, int y, coord_t * source);
-	uint32_t read32(File f);
-	uint16_t read16(File f);
+	void mapCursor(long int* lat, long int* lon); // Maps a given cursor with gps info provided onto a pixel map of the image
+	void remapCursor(); // Remaps the cursor from its pixel map to a location on the moving local map tile
+	void centerCursor(); // Centers the display on the display pane
+	void bmpDraw(int x, int y, coord_t * source); // Draws a bmp image as stored in the objects variables
+	uint32_t read32(File f); // Reads 32 bytes of data
+	uint16_t read16(File f); // Reads 16 bytes of data
 private:
-	map_coord tile;
-	lcd_image_t map_image;
-	bool draw;
-	coord_t cursor;
-	coord_t oldCursor;
-	coord_t map_tile;
+	map_coord tile; // Defines a map tile for display
+	lcd_image_t map_image; // Defines the storage element for the max image
+	bool draw; // Stores whether the image should be printed or not
+	coord_t cursor; // Holds the current cursors position
+	coord_t oldCursor; // Holds the old cursors position
+	coord_t map_tile; // Holds the local map tile for display
 	
-	Adafruit_TFTLCD * display;
+	Adafruit_TFTLCD * display; // Holds the image that we are displaying locally
 	
 	// To print the maps on a offset from the left (to leave room for interfaces), add an offset in px
 	static const int screenoffset = 105;
@@ -52,21 +55,26 @@ private:
 
 MapData::MapData(long int north, long int south, long int west, long int east, char * filename, int width, int height)
 {
+	// Translates the input into the storage structure
 	tile.north = north;
 	tile.south = south;
 	tile.west = west;
 	tile.east = east;
 	
+	// Save the map information for mapping
 	map_image.ncols = width;
 	map_image.nrows = height;
 	
+	// Store the filename into the local structure
 	for(int i = 0; i <= strlen(filename)*sizeof(char); i++)
 		map_image.file_name[i] = filename[i];
 	
+	// Indicates that the drawing should be conducted (upon ini, the map has not been printed, by definition, we need to tell it that it still needs to be printed)
 	draw = true;
 	
-	oldCursor.x = 0;
-	oldCursor.y = 0;
+	// Generate some old variables to ensure that the cursor is printed
+	oldCursor.x = -1;
+	oldCursor.y = -1;
 }
 
 void MapData::drawMap(coord_t * tile)
@@ -78,9 +86,6 @@ void MapData::resetMap()
 {
 	draw = true;
 }
-
-// North >> South
-// West << East
 
 void MapData::mapCursor(long int* lat, long int* lon)
 {
@@ -162,7 +167,9 @@ bool MapData::drawCursor(Adafruit_TFTLCD* d, gpsData* data)
 		
 		if(oldCursor.x != cursor.x || oldCursor.y != cursor.y)
 		{
-			display->fillCircle(oldCursor.x, oldCursor.y, 3, BLUE);
+			if(oldCursor.x > 0 && oldCursor.y > 0)
+				display->fillCircle(oldCursor.x, oldCursor.y, 3, BLUE);
+			
 			display->fillCircle(cursor.x, cursor.y, 3, CYAN);
 			oldCursor = cursor;
 			
