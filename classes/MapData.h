@@ -79,52 +79,54 @@ MapData::MapData(long int north, long int south, long int west, long int east, c
 
 void MapData::drawMap(coord_t * tile)
 {
-	bmpDraw(screenoffset, 0, tile);
+	bmpDraw(screenoffset, 0, tile); // Draws the selected bmp image
 }
 
 void MapData::resetMap()
 {
-	draw = true;
+	draw = true; // Resets the printing mode
 }
 
 void MapData::mapCursor(long int* lat, long int* lon)
 {
-	if(*lon < tile.west || *lon > tile.east)
+	if(*lon < tile.west || *lon > tile.east) // If out of bounds
 	{
 		cursor.x = -1;
 		return;
 	}
 	
-	cursor.x = map(*lon, tile.west, tile.east, 0, map_image.ncols);
+	cursor.x = map(*lon, tile.west, tile.east, 0, map_image.ncols); // Map the cursor
 	
-	if(*lat > tile.north || *lat < tile.south)
+	if(*lat > tile.north || *lat < tile.south) // If out of bounds
 	{
 		cursor.y = -1;
 		return;
 	}
 	
-	cursor.y = map(*lat, tile.north, tile.south, 0, map_image.nrows);
+	cursor.y = map(*lat, tile.north, tile.south, 0, map_image.nrows); // Map the cursor
 }
 
 void MapData::remapCursor()
 {
+	// Remaps the cursor for moving printing on the local map tile
 	cursor.x = map(cursor.x, map_tile.x, map_tile.x + display->width() - screenoffset, screenoffset, display->width());
 	cursor.y = map(cursor.y, map_tile.y, map_tile.y + display->height(), 0, display->height());
 }
 
 void MapData::centerCursor()
 {
+	// Center the cursor
 	cursor.x = (display->width() - screenoffset)/2 + screenoffset;
 	cursor.y = display->height()/2;
 }
 
 bool MapData::drawCursor(Adafruit_TFTLCD* d, gpsData* data)
 {
-	display = d;
+	display = d; // Reserves the display object
 	
-	mapCursor(&data->lat, &data->lon);
+	mapCursor(&data->lat, &data->lon); // Map the cursor for the map tile to print
 	
-	if(cursor.x < (display->width() - screenoffset)/2)
+	if(cursor.x < (display->width() - screenoffset)/2) // If out of bounds...
 	{
 		#if SERIAL_PRINT_ENABLE
 		Serial.print("Cursor out of bounds: ");
@@ -136,7 +138,7 @@ bool MapData::drawCursor(Adafruit_TFTLCD* d, gpsData* data)
 		return false;
 	}
 	
-	if(cursor.y < display->height()/2)
+	if(cursor.y < display->height()/2) // If out of bounds...
 	{
 		#if SERIAL_PRINT_ENABLE
 		Serial.print("Cursor out of bounds: ");
@@ -148,7 +150,7 @@ bool MapData::drawCursor(Adafruit_TFTLCD* d, gpsData* data)
 		return false;
 	}
 	
-	if(draw)
+	if(draw) // If we havent drawn the map yet or need to redraw....
 	{
 		map_tile.x = cursor.x - (display->width() - screenoffset)/2;
 		map_tile.y = cursor.y - display->height()/2;
@@ -161,27 +163,27 @@ bool MapData::drawCursor(Adafruit_TFTLCD* d, gpsData* data)
 		oldCursor = cursor;
 		draw = false;
 	}
-	else
+	else // No? Then just draw a cursor
 	{
 		remapCursor();
 		
-		if(oldCursor.x != cursor.x || oldCursor.y != cursor.y)
+		if(oldCursor.x != cursor.x || oldCursor.y != cursor.y) // Only if its changed...
 		{
-			if(oldCursor.x > 0 && oldCursor.y > 0)
-				display->fillCircle(oldCursor.x, oldCursor.y, 3, BLUE);
+			if(oldCursor.x > 0 && oldCursor.y > 0) // And its actually a valid location to print...
+				display->fillCircle(oldCursor.x, oldCursor.y, 3, BLUE); // Fill the old one with blue...
 			
-			display->fillCircle(cursor.x, cursor.y, 3, CYAN);
-			oldCursor = cursor;
+			display->fillCircle(cursor.x, cursor.y, 3, CYAN); // The new one with CYAN!
+			oldCursor = cursor; // And don't forget our location, we'll need to change its color
 			
-			if(cursor.x > display->width() - 10 || cursor.x < 105 + 10 || cursor.y > display->height() - 10 || cursor.y < 0 + 10)
+			if(cursor.x > display->width() - 10 || cursor.x < 105 + 10 || cursor.y > display->height() - 10 || cursor.y < 0 + 10) // But if its too closeto the edge...
 			{
-				draw = true;
+				draw = true; // Then move the map to compensate
 			}
 			
 		}
 	}
 	
-	return true;
+	return true; // And let the caller know that it all worked out
 }
 
 // These read 16- and 32-bit types from the SD card file.
